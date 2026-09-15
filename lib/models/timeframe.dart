@@ -1,6 +1,9 @@
+// The time-range options shown as chips on the node dashboard, used to
+// filter which readings get charted/exported.
 enum Timeframe { h2, h4, h8, h24, all }
 
 extension TimeframeX on Timeframe {
+  // Short text shown on the UI's ChoiceChip for each option.
   String get label {
     switch (this) {
       case Timeframe.h2:
@@ -16,6 +19,8 @@ extension TimeframeX on Timeframe {
     }
   }
 
+  // Actual window length used to filter readings (see filterByTimeframe
+  // in services/stats.dart). Null means "no filtering" (show everything).
   Duration? get duration {
     switch (this) {
       case Timeframe.h2:

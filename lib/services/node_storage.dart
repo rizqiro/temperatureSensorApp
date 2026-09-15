@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/sensor_node.dart';
 
+// Persists the user's list of saved sensor nodes on-device using
+// SharedPreferences (simple key/value storage), encoding the list as a
+// single JSON string.
 class NodeStorage {
   static const _key = 'sensor_nodes';
 

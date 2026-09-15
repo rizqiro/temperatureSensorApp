@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/csv_storage.dart';
 
+// Lists every CSV export previously saved to the phone (across all
+// nodes) and lets the user re-share any of them (e.g. via WhatsApp)
+// without needing to reconnect to the ESP32.
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
 
@@ -20,6 +23,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     _load();
   }
 
+  // Loads every saved export file from local storage (newest first).
   Future<void> _load() async {
     final files = await CsvStorage().listAllSaved();
     setState(() {
@@ -28,6 +32,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     });
   }
 
+  // Opens the OS share sheet for a single saved CSV file.
   Future<void> _share(File file) async {
     await Share.shareXFiles([XFile(file.path)], text: file.path.split('/').last);
   }

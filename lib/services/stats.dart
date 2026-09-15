@@ -1,5 +1,8 @@
 import '../models/reading.dart';
 
+// Summary values shown at the top of the node dashboard: latest, highest,
+// and lowest temperature (plus when the high/low occurred) within
+// whatever set of readings is passed in (already timeframe-filtered).
 class ReadingStats {
   final double current;
   final double max;
@@ -15,6 +18,8 @@ class ReadingStats {
     required this.minEpoch,
   });
 
+  // Returns null when there's nothing to summarize (e.g. no readings
+  // loaded yet, or the selected timeframe filtered everything out).
   static ReadingStats? fromReadings(List<Reading> readings) {
     if (readings.isEmpty) return null;
     var maxR = readings.first;
