@@ -5,6 +5,9 @@ import 'add_node_screen.dart';
 import 'node_dashboard_screen.dart';
 import 'history_screen.dart';
 
+// The app's landing screen: shows the list of saved sensor nodes and
+// lets the user add new ones, delete them (swipe to dismiss), or tap
+// into a node's dashboard.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -22,11 +25,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _load();
   }
 
+  // Loads the saved node list from on-device storage on first build.
   Future<void> _load() async {
     final nodes = await _storage.loadNodes();
     setState(() => _nodes = nodes);
   }
 
+  // Opens the "add node" form and, if the user saves a node, appends it
+  // to the list and persists the updated list.
   Future<void> _addNode() async {
     final result = await Navigator.push<SensorNode>(
       context,
@@ -38,6 +44,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Removes a node from the list (triggered by swipe-to-dismiss) and
+  // persists the change. Note: this only forgets the node in the app -
+  // it doesn't affect the ESP32 device itself.
   Future<void> _deleteNode(SensorNode node) async {
     setState(() => _nodes.removeWhere((n) => n.id == node.id));
     await _storage.saveNodes(_nodes);

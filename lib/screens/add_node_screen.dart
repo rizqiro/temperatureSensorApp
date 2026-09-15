@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../models/sensor_node.dart';
 
+// Form for registering a new ESP32 sensor node. The values entered here
+// must match the AP_SSID/AP_PASS the node broadcasts (set at the top of
+// espCode/sd_card_node.ino) so the app knows when the phone is on the
+// right Wi-Fi network, plus the IP to send HTTP requests to.
 class AddNodeScreen extends StatefulWidget {
   const AddNodeScreen({super.key});
 
@@ -25,6 +29,8 @@ class _AddNodeScreenState extends State<AddNodeScreen> {
     super.dispose();
   }
 
+  // Validates the form, builds a new SensorNode with a fresh unique id,
+  // and pops it back to HomeScreen (which then persists it).
   void _save() {
     if (!_formKey.currentState!.validate()) return;
     final node = SensorNode(

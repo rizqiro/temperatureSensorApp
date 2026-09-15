@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+// Mirrors the JSON returned by the ESP32's GET /status endpoint
+// (see handleStatus() in espCode/sd_card_node.ino).
 class Esp32Status {
   final String nodeId;
   final double temperature;
@@ -27,6 +29,7 @@ class Esp32Client {
   final String baseUrl; // e.g. http://192.168.4.1
   Esp32Client(this.baseUrl);
 
+  // GET /status - quick reachability check + live reading.
   Future<Esp32Status> fetchStatus() async {
     final res = await http
         .get(Uri.parse('$baseUrl/status'))
@@ -49,6 +52,8 @@ class Esp32Client {
         .timeout(const Duration(seconds: 5));
   }
 
+  // GET /list - names of log files available on the SD card (currently
+  // just the single /log.csv, but kept as a list for future expansion).
   Future<List<String>> listFiles() async {
     final res = await http
         .get(Uri.parse('$baseUrl/list'))
@@ -57,6 +62,7 @@ class Esp32Client {
     return list.map((e) => e.toString()).toList();
   }
 
+  // GET /download?file=... - streams one log file's raw CSV contents.
   Future<String> downloadFile(String path) async {
     final res = await http
         .get(Uri.parse('$baseUrl/download?file=$path'))

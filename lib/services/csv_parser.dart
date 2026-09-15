@@ -1,5 +1,7 @@
 import '../models/reading.dart';
 
+// Converts between the plain-text CSV format the ESP32 writes/reads and
+// the app's Reading model.
 class CsvParser {
   /// Parses raw CSV text from the ESP32 (header: epoch,node_id,temperature_c,swing_c,event)
   static List<Reading> parse(String csvContent) {
@@ -9,9 +11,9 @@ class CsvParser {
     for (var i = 1; i < lines.length; i++) {
       // skip header row
       final parts = lines[i].split(',');
-      if (parts.length < 5) continue;
+      if (parts.length < 5) continue; // malformed/truncated line, skip it
       final epoch = int.tryParse(parts[0].trim());
-      if (epoch == null) continue;
+      if (epoch == null) continue; // malformed epoch, skip the row
       readings.add(Reading(
         epoch: epoch,
         nodeId: parts[1].trim(),
@@ -20,6 +22,8 @@ class CsvParser {
         event: parts[4].trim() == '1',
       ));
     }
+    // The ESP32 appends in order, but sort defensively (e.g. if the
+    // device's clock was set with /settime partway through logging).
     readings.sort((a, b) => a.epoch.compareTo(b.epoch));
     return readings;
   }

@@ -10,6 +10,9 @@ import '../services/csv_parser.dart';
 import '../services/csv_storage.dart';
 import '../services/stats.dart';
 
+// Main screen for a single sensor node: connect to its Wi-Fi access
+// point, pull down its CSV log over HTTP, then show a summary, a chart,
+// and options to export/share the data or clear the log on the device.
 class NodeDashboardScreen extends StatefulWidget {
   final SensorNode node;
   const NodeDashboardScreen({super.key, required this.node});
@@ -22,10 +25,13 @@ class _NodeDashboardScreenState extends State<NodeDashboardScreen> {
   bool _connecting = false;
   bool _connected = false;
   String _message = '';
-  List<Reading> _allReadings = [];
+  List<Reading> _allReadings = []; // unfiltered readings straight from the last download
   Timeframe _timeframe = Timeframe.h4;
-  String? _lastExportPath;
+  String? _lastExportPath; // path of the most recently exported CSV, enables the "Share" button
 
+  // Talks to the ESP32 over HTTP (assumes the phone's Wi-Fi is already
+  // connected to the node's access point): confirms it's reachable,
+  // syncs the device clock, then downloads and parses its log file.
   Future<void> _connectAndLoad() async {
     setState(() {
       _connecting = true;
@@ -66,8 +72,12 @@ class _NodeDashboardScreenState extends State<NodeDashboardScreen> {
 
   Future<void> _refresh() => _connectAndLoad();
 
+  // Readings actually shown in the UI: all downloaded readings narrowed
+  // down to the currently selected Timeframe chip.
   List<Reading> get _visibleReadings => filterByTimeframe(_allReadings, _timeframe.duration);
 
+  // Saves the currently visible (timeframe-filtered) readings as a CSV
+  // file in the phone's own storage, independent of the ESP32's SD card.
   Future<void> _exportCsv() async {
     final rows = _visibleReadings;
     if (rows.isEmpty) return;
@@ -79,6 +89,8 @@ class _NodeDashboardScreenState extends State<NodeDashboardScreen> {
     });
   }
 
+  // Opens the OS share sheet for the most recent export (e.g. to send
+  // it via WhatsApp).
   Future<void> _shareLastExport() async {
     if (_lastExportPath == null) return;
     await Share.shareXFiles(
@@ -87,6 +99,9 @@ class _NodeDashboardScreenState extends State<NodeDashboardScreen> {
     );
   }
 
+  // Prompts for confirmation, then tells the ESP32 to erase its SD card
+  // log via POST /clear. Meant to be used only after exporting, since
+  // this permanently deletes the data on the device.
   Future<void> _clearOnDevice() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -139,6 +154,8 @@ class _NodeDashboardScreenState extends State<NodeDashboardScreen> {
     );
   }
 
+  // Shown before a successful connection: step-by-step Wi-Fi
+  // instructions plus a "Connect" button.
   Widget _buildConnectCard() {
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -173,6 +190,9 @@ class _NodeDashboardScreenState extends State<NodeDashboardScreen> {
     );
   }
 
+  // Shown once connected and data has loaded: stat cards, timeframe
+  // chips, the temperature chart, and export/share buttons. Pull-to-
+  // refresh re-runs the full connect-and-download flow.
   Widget _buildDashboard(ReadingStats? stats) {
     return RefreshIndicator(
       onRefresh: _refresh,
@@ -228,6 +248,7 @@ class _NodeDashboardScreenState extends State<NodeDashboardScreen> {
     );
   }
 
+  // Small labeled tile used for the Current/Max/Min stat row.
   Widget _statCard(String label, String value, String? time) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -250,6 +271,8 @@ class _NodeDashboardScreenState extends State<NodeDashboardScreen> {
     );
   }
 
+  // Row of chips for picking the Timeframe used to filter the chart,
+  // stats, and CSV export.
   Widget _timeframeSelector() {
     return Wrap(
       spacing: 8,
@@ -264,6 +287,8 @@ class _NodeDashboardScreenState extends State<NodeDashboardScreen> {
     );
   }
 
+  // Line chart of temperature over time for the visible (timeframe-
+  // filtered) readings, using epoch seconds as the x-axis.
   Widget _buildChart() {
     final rows = _visibleReadings;
     if (rows.isEmpty) {
@@ -272,6 +297,7 @@ class _NodeDashboardScreenState extends State<NodeDashboardScreen> {
     final spots = rows.map((r) => FlSpot(r.epoch.toDouble(), r.temperature)).toList();
     final minX = spots.first.x;
     final maxX = spots.last.x;
+    // Space out the bottom axis labels into ~4 ticks, never less than 60s apart.
     final interval = ((maxX - minX) / 4).clamp(60, double.infinity).toDouble();
 
     return LineChart(
